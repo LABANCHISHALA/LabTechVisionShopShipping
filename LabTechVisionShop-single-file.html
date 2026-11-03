@@ -1,0 +1,699 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>LabTechVisionShopShipping</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky bench-style header, platform chooser as the opener, shop grid of spec-tag cards, then a two-column sync console (steps | orders, feed, log). */
+:root{
+  --bg:#F1F5F4; --surface:#FFFFFF; --ink:#0E1F1E; --muted:#566967; --line:#D3DDDB;
+  --accent:#0A7C74; --accent-ink:#FFFFFF; --accent-soft:#DAEFEC;
+  --warn:#9A4A06; --warn-soft:#FCEBD2; --good:#17703A; --good-soft:#D9F1E1; --bad:#B3261E;
+  --ali:#C2410C; --ebay:#1D4ED8;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+:root{--muted:#566967}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1514; --surface:#122120; --ink:#E5F0EE; --muted:#93A9A6; --line:#264340;
+  --accent:#3FD0C4; --accent-ink:#052B28; --accent-soft:#12403C;
+  --warn:#F2A65A; --warn-soft:#3A2810; --good:#5BD58A; --good-soft:#12361F; --bad:#F2867F;
+  --ali:#FB923C; --ebay:#7AA2FF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1514; --surface:#122120; --ink:#E5F0EE; --muted:#93A9A6; --line:#264340;
+  --accent:#3FD0C4; --accent-ink:#052B28; --accent-soft:#12403C;
+  --warn:#F2A65A; --warn-soft:#3A2810; --good:#5BD58A; --good-soft:#12361F; --bad:#F2867F;
+  --ali:#FB923C; --ebay:#7AA2FF; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.1}
+h1{font-size:clamp(30px,5vw,52px);font-weight:700;letter-spacing:-.02em}
+h2{font-size:clamp(24px,3.4vw,34px);font-weight:700;letter-spacing:-.015em}
+h3{font-size:17px;font-weight:500}
+p{margin:0}
+.mono{font-family:var(--f-mono)}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:-.01em;text-decoration:none;color:var(--ink);min-width:0}
+.brand svg{flex:none}
+.nav{display:flex;gap:16px;margin-left:auto}
+.nav a{color:var(--muted);text-decoration:none;font-size:14px}
+.nav a:hover{color:var(--ink)}
+.tools{display:flex;gap:8px;align-items:center}
+.tools select,.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 11px;cursor:pointer}
+.tools select{font-family:var(--f-mono);font-size:13px}
+.btn{font-weight:500;font-size:14px}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover:not(:disabled){filter:brightness(1.08)}
+.cartbtn{display:flex;gap:8px;align-items:center}
+.count{font-family:var(--f-mono);font-size:12px;background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:0 7px;min-width:20px;text-align:center}
+@media(max-width:640px){.nav{display:none}.tools{margin-left:auto}}
+
+/* platform chooser */
+.hero{padding-block:44px 28px;display:grid;gap:22px}
+.hero p.lead{max-width:60ch;color:var(--muted);font-size:16px}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.choice{text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:10px;cursor:pointer;min-width:0}
+.choice:hover{border-color:var(--accent)}
+.choice[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.choice .name{font-family:var(--f-display);font-size:22px;font-weight:700}
+.choice .meta{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.choice .sel{font-family:var(--f-mono);font-size:12px;color:var(--accent);min-height:18px}
+.sources{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px;color:var(--muted)}
+
+/* chips */
+.src{font-family:var(--f-mono);font-size:11px;letter-spacing:.04em;display:inline-flex;align-items:center;gap:6px}
+.src::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.src.ali{color:var(--ali)}.src.ebay{color:var(--ebay)}
+.pill{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good);border-color:transparent}
+.pill.ready{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+
+/* sections */
+section{padding-block:36px 8px;scroll-margin-top:72px}
+.shead{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.shead p{color:var(--muted);max-width:56ch;margin-top:6px}
+
+/* shop */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.spec{position:relative;height:130px;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;
+  background-color:var(--accent-soft);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:18px 18px}
+.spec .sku{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.spec b{font-family:var(--f-display);font-size:34px;font-weight:700;letter-spacing:-.02em;color:var(--accent);line-height:1}
+.spec i{font-style:normal;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink)}
+
+
+.paychips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.paychips span{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 11px}
+.mback{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
+.mbox{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;width:min(480px,100%);padding:18px;display:grid;gap:12px}
+.mbox label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.mbox input[type=text],.mbox input[type=tel]{padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+.mbox .opt{display:flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:8px;padding:9px 11px;cursor:pointer;color:var(--ink);font-size:14px}
+.mbox .opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.mbox .help{background:var(--accent-soft);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.5}
+.mbox .acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.mbox a.btn{text-decoration:none;display:inline-block}
+/* product pictures */
+.pic{position:relative;height:176px;overflow:hidden;background-color:var(--accent-soft);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:18px 18px}
+.pic>svg{display:block;width:100%;height:100%;padding:30px 12px 22px;box-sizing:border-box}
+.pic>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:var(--surface)}
+.pic .sku,.pic .tag,.pic i{position:absolute;z-index:2;font-family:var(--f-mono);font-size:11px}
+.pic .sku{top:10px;left:12px;letter-spacing:.06em;color:var(--muted)}
+.pic .tag{top:8px;right:10px;background:var(--surface);color:var(--accent);border:1px solid var(--line);border-radius:99px;padding:2px 9px;font-weight:500}
+.pic i{bottom:8px;left:12px;font-style:normal;text-transform:uppercase;letter-spacing:.1em;color:var(--ink)}
+.card .body{padding:14px;display:grid;gap:8px;flex:1;align-content:start}
+.card .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
+.price{font-family:var(--f-mono);font-size:17px;font-weight:500;font-variant-numeric:tabular-nums}
+.card small{color:var(--muted);font-size:12px}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:28px;color:var(--muted);text-align:center;grid-column:1/-1}
+
+/* cart */
+.cart{position:fixed;z-index:40;top:0;bottom:0;right:0;width:min(400px,100%);background:var(--surface);border-left:1px solid var(--line);
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) 16px;
+  display:flex;flex-direction:column;gap:14px;box-shadow:-12px 0 32px rgba(0,0,0,.16)}
+.cart header{display:flex;justify-content:space-between;align-items:center}
+.cart ul{list-style:none;margin:0;padding:0;overflow:auto;flex:1;display:grid;gap:10px;align-content:start}
+.cart li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.cart li .q{display:flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:13px}
+.q button{width:26px;height:26px;border:1px solid var(--line);background:var(--bg);border-radius:6px;cursor:pointer}
+.total{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:16px;font-variant-numeric:tabular-nums}
+
+/* sync console */
+.console{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:900px){.console{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0}
+.stack{display:grid;gap:16px;min-width:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:9px 18px;cursor:pointer;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.notice{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:10px 14px;font-size:13.5px}
+.modebar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.rules{display:flex;gap:14px;flex-wrap:wrap;align-items:end}
+.rules label{display:grid;gap:4px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.rules input{width:96px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-family:var(--f-mono);font-size:14px;text-transform:none;letter-spacing:0;color:var(--ink)}
+.step{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:start;padding:14px 0;border-top:1px solid var(--line)}
+.step:first-child{border-top:0;padding-top:0}
+.step .n{font-family:var(--f-mono);font-size:13px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)}
+.step.done .n{background:var(--good-soft);color:var(--good);border-color:transparent}
+.step h3{font-size:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.step p{color:var(--muted);font-size:13.5px;margin-top:3px}
+.step .why{font-family:var(--f-mono);font-size:12px;color:var(--warn);margin-top:4px}
+.aitag{font-family:var(--f-mono);font-size:11px;color:var(--accent);white-space:nowrap}
+@media(max-width:520px){.step{grid-template-columns:34px minmax(0,1fr)}.step .act{grid-column:2}}
+.feedrow,.orderrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+.feedrow:first-of-type,.orderrow:first-of-type{border-top:0}
+.feedrow .sub,.orderrow .sub{grid-column:2;color:var(--muted);font-family:var(--f-mono);font-size:11.5px}
+.orderrow{grid-template-columns:minmax(0,1fr) auto}
+.orderrow .sub{grid-column:1/-1}
+.log{list-style:none;margin:0;padding:0;font-family:var(--f-mono);font-size:12px;display:grid;gap:6px;max-height:260px;overflow:auto}
+.log li{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px}
+.log .t{color:var(--muted)}
+.log .who{color:var(--accent)}
+.log .who.you{color:var(--ebay)}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.switch input{width:18px;height:18px;accent-color:var(--accent)}
+details{border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:600}
+.rates{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.rates label{display:grid;gap:4px;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.rates input{width:104px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-family:var(--f-mono);font-size:13px}
+.live{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.live ul{margin:8px 0 0;padding-left:18px;color:var(--muted);display:grid;gap:6px;font-size:14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:60;font-size:14px;max-width:calc(100% - 32px)}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+
+<style>
+html:root:root:root{--bg:#F3F6FB;--surface:#fff;--ink:#0B1F3A;--muted:#5A6B85;--line:#D9E1EE;--accent:#0E8F7E;--accent-ink:#fff;--accent-soft:#DDF4EF;color-scheme:light}
+html .top{background:#0B2447;border-bottom:0}
+html .top .brand,html .top .brand span,html .top .nav a{color:#fff}
+html .top .nav a:hover{color:#F5A524}
+.strip{background:#07172e;color:#cfe3ff;font-size:13px;padding:6px 16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+.strip a{color:#fff;text-decoration:none;font-weight:500}
+.adbar{background:linear-gradient(90deg,#F59E0B,#F97316);color:#1b1200;text-align:center;padding:9px 14px;font-weight:600}
+.hero{background:linear-gradient(135deg,#0B2447,#19376D 55%,#0E8F7E);color:#fff;border-radius:16px;padding:34px 28px;margin-top:18px}
+html .hero h1,html .hero p.lead{color:#fff!important;opacity:1}.hero .eyebrow{color:#F5C46B}.hero .eyebrow{color:#F5C46B}
+.hero .sources{color:#dbeafe}.hero .src{background:#fff;padding:2px 9px;border-radius:99px}
+.paychips span{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff}
+.tools{flex-wrap:wrap}#acct{display:inline-flex;gap:6px}
+.btn.primary{background:var(--accent)}.btn.primary:hover{filter:brightness(1.1)}
+.card{transition:box-shadow .2s,transform .2s}.card:hover{box-shadow:0 8px 22px rgba(11,36,71,.15);transform:translateY(-2px)}
+.mbox{max-height:calc(100vh - 48px);overflow:auto}
+.mbox input:not([type=radio]):not([type=checkbox]),.mbox textarea,.mbox select{padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;width:100%}
+.fg{display:grid;gap:10px}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wafloat{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:35;background:#25D366;color:#073b1b;font-weight:700;border-radius:99px;padding:12px 18px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.bb{position:absolute;z-index:3;right:10px;bottom:8px;background:#17703A;color:#fff;font:600 11px var(--f-mono);padding:3px 9px;border-radius:99px}.conn{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}.cbox{flex:1;min-width:210px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}.cbox small{color:var(--muted)}
+.contact{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px}.contact a{color:var(--accent);font-weight:600;text-decoration:none}
+</style>
+
+<div class="adbar" id="adBar" hidden></div>
+<div class="strip"><span>Call / WhatsApp: <a data-ph href="#"></a></span><span>Email: <a data-em href="#"></a></span><span>Delivering across Africa</span></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#platform" aria-label="LabTechVisionShopShipping home">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="13" cy="13" r="8.5" fill="none" stroke="var(--accent)" stroke-width="2.4"/><circle cx="13" cy="13" r="3" fill="var(--accent)"/><path d="M19.5 19.5 26 26" stroke="var(--accent)" stroke-width="2.8" stroke-linecap="round"/></svg>
+      <span>LabTechVisionShopShipping</span>
+    </a>
+    <nav class="nav" aria-label="Sections"><a href="#shop">Shop</a><a href="#sync">Supplier sync</a><a href="#live">Go live</a></nav>
+    <div class="tools">
+      <label class="sr" for="cur" style="position:absolute;left:-9999px">Currency</label>
+      <select id="ctry" aria-label="Deliver to"></select><span id="acct"></span>
+      <select id="cur" aria-label="Currency"></select>
+      <button class="btn cartbtn" id="cartOpen" type="button">Cart <span class="count" id="cartCount">0</span></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero" id="platform">
+    <p class="eyebrow">Dropshipping storefront · AliExpress + eBay suppliers</p>
+    <h1>Lab &amp; test equipment, delivered across Africa</h1>
+    <p class="lead">Pick your country and pay the way you already do: mobile money, bank transfer and more. Prices switch to your local currency.</p>
+    <div class="paychips" aria-label="Ways to pay"><span>M-Pesa</span><span>MTN MoMo</span><span>Airtel Money</span><span>EcoCash</span><span>Orange Money</span><span>Tigo Pesa</span><span>Zamtel Kwacha</span><span>Bank transfer</span></div>
+    <div class="sources"><span>Supplier sources:</span><span class="src ali">AliExpress</span><span class="src ebay">eBay</span></div>
+  </div>
+
+  <section id="shop">
+    <div class="shead">
+      <div>
+        <p class="eyebrow">Storefront</p>
+        <h2>Lab &amp; test equipment</h2>
+        <p>Prices are shown in the currency you pick. Imported products appear here automatically.</p>
+      </div>
+      <div class="rules" style="align-items:center"><span class="pill" id="platTag"></span></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <details style="margin-top:20px">
+      <summary>Currency rates (editable, US$ 1 =)</summary>
+      <p style="color:var(--muted);font-size:13px;margin-top:8px">Starting values for testing. Replace them with live rates before selling.</p>
+      <div class="rates" id="rates"></div>
+    </details>
+  </section>
+
+  <section id="sync">
+    <div class="shead">
+      <div>
+        <p class="eyebrow">Supplier sync</p>
+        <h2>Run it with AI, or by hand</h2>
+        <p id="modeText"></p>
+      </div>
+      <div class="seg" role="group" aria-label="Sync mode">
+        <button type="button" data-mode="ai" aria-pressed="true">AI</button>
+        <button type="button" data-mode="manual" aria-pressed="false">Manual</button>
+      </div>
+    </div>
+    <p class="notice" style="margin-bottom:16px">Preview build: accounts, supplier listings and AI actions are simulated so you can test the full flow. Nothing here contacts AliExpress, eBay or a live store. See "Go live" below for the real setup.</p>
+
+    <div class="console">
+      <div class="panel">
+        <div class="modebar">
+          <div class="rules">
+            <label>Markup %<input id="markup" type="number" min="0" max="500" step="1" value="60"></label>
+            <span id="aiRules" class="rules">
+              <label>Min rating ★<input id="minRating" type="number" min="1" max="5" step="0.1" value="4.5"></label>
+              <label>Max ship days<input id="maxShip" type="number" min="1" max="60" step="1" value="15"></label>
+            </span>
+          </div>
+          <div id="aiActions" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <button class="btn primary" id="autoRun" type="button">Run AI autopilot</button>
+            <label class="switch"><input type="checkbox" id="autoKeep"> Keep autopilot on</label>
+          </div>
+        </div>
+        <div class="conn" id="conn"></div>
+        <div id="steps"></div>
+      </div>
+
+      <div class="stack">
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <h3>Supplier feed</h3><span class="pill" id="feedCount"></span>
+          </div>
+          <div id="feed"></div>
+        </div>
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <h3>Orders</h3><button class="btn" id="testOrder" type="button">Add test order</button>
+          </div>
+          <div id="orders"></div>
+        </div>
+        <div class="panel">
+          <h3>Activity</h3>
+          <ul class="log" id="log"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="live">
+    <div class="shead"><div><p class="eyebrow">Go live</p><h2>Connect the real thing</h2>
+      <p>This page is the design and the workflow. A live store runs on Shopify or WordPress, with a sync app or plugin doing the supplier work.</p></div></div>
+    <div class="live">
+      <div class="panel"><h3>African payments</h3>
+        <ul>
+          <li>Mobile money: WordPress.org lists WooCommerce plugins for MTN MoMo, Airtel Money and Zamtel Kwacha (TuMeNy Payment, and Bila by Devdraft). Each needs its own merchant account and KYC.</li>
+          <li>Lipila offers mobile money, Visa/Mastercard and bank transfers in Zambia through an API; check whether it has a WooCommerce plugin when you sign up.</li>
+          <li>Other countries: Flutterwave, Paystack and DPO Pay each cover several African countries (M-Pesa, MTN MoMo, Airtel Money, cards, bank). Check each one's country list and fees before you choose.</li>
+          <li>eBay and AliExpress: a live link needs eBay Developer keys and supplier sign-in through a sync app or plugin. The Connect buttons in Supplier sync are a preview.</li>
+          <li>PayPal and cards: the shop opens your PayPal.me or card payment link with the amount. Fully automatic confirmation needs the gateway plugin on the live store.</li>
+          <li>Bank buyers: show your Zanaco, Stanbic, FNB, Absa, Standard Chartered or Indo-Zambia account at checkout until a card gateway is live.</li>
+        </ul></div>
+      <div class="panel"><h3>WordPress + WooCommerce setup</h3>
+        <ul>
+          <li>Set up hosting and WordPress, install WooCommerce, then add a dropshipping plugin that imports from AliExpress and eBay.</li>
+          <li>Add a multi-currency plugin so shoppers can switch currency at checkout.</li>
+          <li>Plan for backups, SSL and updates yourself.</li>
+        </ul></div>
+    </div>
+  </section>
+  <footer><div class="contact"><a data-ph href="#"></a><a data-em href="#"></a><a data-wa target="_blank" rel="noopener" href="#">Chat on WhatsApp</a></div><p>Delivery times, shipping costs and import duties differ by country; supplier times shown are examples. <a href="#owner" id="ownBtn" style="color:var(--muted)">Owner settings</a></p></footer><a class="wafloat" data-wa target="_blank" rel="noopener" href="#">WhatsApp us</a>
+</main>
+
+<aside class="cart" id="cart" hidden aria-label="Cart">
+  <header><h3>Your cart</h3><button class="btn" id="cartClose" type="button">Close</button></header>
+  <ul id="cartList"></ul>
+  <div class="total"><span>Total</span><span id="cartTotal"></span></div>
+  <button class="btn primary" id="checkout" type="button">Place order</button>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)};
+  var P=[
+    {id:1,name:"USB Digital Microscope",spec:"1000×",cat:"Optics",src:"AliExpress",cost:18.4,stock:142,rating:4.7,ship:12,imported:true},
+    {id:2,name:"Auto-Range Digital Multimeter",spec:"CAT III",cat:"Test gear",src:"AliExpress",cost:11.9,stock:310,rating:4.6,ship:10,imported:true},
+    {id:3,name:"Adjustable Soldering Station",spec:"60 W",cat:"Bench",src:"eBay",cost:21.5,stock:76,rating:4.8,ship:8,imported:true},
+    {id:4,name:"Precision Screwdriver Set",spec:"115 pc",cat:"Tools",src:"AliExpress",cost:9.8,stock:520,rating:4.8,ship:14,imported:true},
+    {id:5,name:"LED Magnifier Desk Lamp",spec:"5×",cat:"Optics",src:"eBay",cost:24,stock:58,rating:4.6,ship:9,imported:true},
+    {id:6,name:"Benchtop pH Meter Kit",spec:"pH 0–14",cat:"Analysis",src:"AliExpress",cost:27.6,stock:33,rating:4.5,ship:13,imported:true},
+    {id:7,name:"Mini Thermal Imaging Camera",spec:"320×240",cat:"Test gear",src:"AliExpress",cost:79,stock:21,rating:4.7,ship:12},
+    {id:8,name:"Raspberry Pi 5 Starter Kit",spec:"8 GB",cat:"Computing",src:"eBay",cost:68,stock:40,rating:4.4,ship:9},
+    {id:9,name:"Anti-Static ESD Mat",spec:"60×40",cat:"Bench",src:"AliExpress",cost:14.2,stock:200,rating:4.8,ship:14},
+    {id:10,name:"Anti-Fog Safety Goggles",spec:"ANSI",cat:"Safety",src:"AliExpress",cost:4.9,stock:800,rating:4.9,ship:18},
+    {id:11,name:"Digital Caliper",spec:"150 mm",cat:"Measuring",src:"eBay",cost:8.7,stock:260,rating:4.6,ship:11},
+    {id:12,name:"Laboratory Magnetic Stirrer",spec:"1500 rpm",cat:"Analysis",src:"AliExpress",cost:42,stock:17,rating:4.5,ship:13}
+  ];
+  /* Product pictures. Built-in illustrations below; to use real photos, put 1.jpg, 2.jpg ... in a folder
+     and set PHOTO_DIR to that folder (for example "images/products/"). A missing photo falls back to the illustration. */
+  var PHOTO_DIR="";
+  var ART={"1": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><rect x=\"58\" y=\"104\" width=\"84\" height=\"10\" rx=\"4\" fill=\"#2b3a42\"/><rect x=\"76\" y=\"99\" width=\"48\" height=\"5\" rx=\"2\" fill=\"#cfd8dc\"/><rect x=\"96\" y=\"38\" width=\"8\" height=\"62\" fill=\"#8a9aa3\"/><rect x=\"94\" y=\"42\" width=\"30\" height=\"8\" rx=\"3\" fill=\"#8a9aa3\"/><rect x=\"82\" y=\"10\" width=\"36\" height=\"62\" rx=\"9\" fill=\"#37474f\"/><rect x=\"82\" y=\"26\" width=\"36\" height=\"7\" fill=\"var(--accent)\"/><rect x=\"90\" y=\"72\" width=\"20\" height=\"12\" rx=\"3\" fill=\"#10181c\"/><ellipse cx=\"100\" cy=\"86\" rx=\"12\" ry=\"3.5\" fill=\"#e8f6f4\"/><circle cx=\"100\" cy=\"46\" r=\"3\" fill=\"#90a4ae\"/><path d=\"M118 22 C160 18 166 70 150 100\" fill=\"none\" stroke=\"#222\" stroke-width=\"3\" stroke-linecap=\"round\"/><rect x=\"144\" y=\"98\" width=\"12\" height=\"9\" rx=\"2\" fill=\"#b0bec5\"/>", "2": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><path d=\"M78 113 C60 128 36 122 28 98\" fill=\"none\" stroke=\"#c62828\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M122 113 C140 128 164 122 172 98\" fill=\"none\" stroke=\"#222\" stroke-width=\"3\" stroke-linecap=\"round\"/><rect x=\"62\" y=\"6\" width=\"76\" height=\"108\" rx=\"11\" fill=\"#f5b81c\"/><rect x=\"68\" y=\"12\" width=\"64\" height=\"96\" rx=\"8\" fill=\"#e0a30c\" opacity=\".5\"/><rect x=\"70\" y=\"16\" width=\"60\" height=\"30\" rx=\"4\" fill=\"#c9d8c5\" stroke=\"#263238\" stroke-width=\"2\"/><text x=\"124\" y=\"38\" text-anchor=\"end\" font-size=\"19\" font-family=\"IBM Plex Mono,ui-monospace,monospace\" fill=\"#1d2b1d\">12.64</text><circle cx=\"100\" cy=\"76\" r=\"22\" fill=\"#263238\"/><circle cx=\"100\" cy=\"76\" r=\"13\" fill=\"#455a64\"/><path d=\"M100 76 L100 62\" stroke=\"#fff\" stroke-width=\"3\" stroke-linecap=\"round\"/><circle cx=\"100\" cy=\"76\" r=\"26\" fill=\"none\" stroke=\"#263238\" stroke-width=\"1.5\" stroke-dasharray=\"1.5 5\"/><circle cx=\"80\" cy=\"104\" r=\"5\" fill=\"#111\" stroke=\"#c62828\" stroke-width=\"2\"/><circle cx=\"100\" cy=\"104\" r=\"5\" fill=\"#111\" stroke=\"#fff\" stroke-width=\"1.5\"/><circle cx=\"120\" cy=\"104\" r=\"5\" fill=\"#111\" stroke=\"#222\" stroke-width=\"2\"/>", "3": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><path d=\"M176 40 C198 34 196 112 112 106\" fill=\"none\" stroke=\"#222\" stroke-width=\"3\" stroke-linecap=\"round\"/><rect x=\"30\" y=\"66\" width=\"82\" height=\"46\" rx=\"7\" fill=\"#263238\"/><rect x=\"38\" y=\"74\" width=\"38\" height=\"16\" rx=\"3\" fill=\"#07201d\"/><text x=\"72\" y=\"87\" text-anchor=\"end\" font-size=\"13\" font-family=\"IBM Plex Mono,ui-monospace,monospace\" fill=\"#5be3a8\">350°</text><circle cx=\"94\" cy=\"86\" r=\"10\" fill=\"#90a4ae\"/><path d=\"M94 86 L94 78\" stroke=\"#263238\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><circle cx=\"42\" cy=\"102\" r=\"3\" fill=\"#ef5350\"/><rect x=\"128\" y=\"64\" width=\"6\" height=\"48\" fill=\"#78909c\"/><path d=\"M122 66 q6 -5 12 0 q6 5 12 0 M122 76 q6 -5 12 0 q6 5 12 0\" fill=\"none\" stroke=\"#b0bec5\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><g transform=\"rotate(-32 150 60)\"><rect x=\"128\" y=\"52\" width=\"58\" height=\"13\" rx=\"6.5\" fill=\"#d84315\"/><rect x=\"108\" y=\"55\" width=\"22\" height=\"7\" fill=\"#b0bec5\"/><polygon points=\"98,55.5 108,55 108,62 98,58.5\" fill=\"#cfd8dc\"/><rect x=\"124\" y=\"52\" width=\"6\" height=\"13\" fill=\"#ffab91\"/></g>", "4": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><rect x=\"34\" y=\"24\" width=\"132\" height=\"84\" rx=\"9\" fill=\"#37474f\"/><rect x=\"40\" y=\"30\" width=\"120\" height=\"72\" rx=\"5\" fill=\"#1f2b30\"/><path d=\"M40 62 H160\" stroke=\"#37474f\" stroke-width=\"2\"/><rect x=\"50\" y=\"37\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"var(--accent)\"/><rect x=\"53\" y=\"55\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"63\" y=\"37\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#f5b81c\"/><rect x=\"66\" y=\"55\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"76\" y=\"37\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#ef5350\"/><rect x=\"79\" y=\"55\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"89\" y=\"37\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#90a4ae\"/><rect x=\"92\" y=\"55\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"102\" y=\"37\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"var(--accent)\"/><rect x=\"105\" y=\"55\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"115\" y=\"37\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#f5b81c\"/><rect x=\"118\" y=\"55\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"128\" y=\"37\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#ef5350\"/><rect x=\"131\" y=\"55\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"141\" y=\"37\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#90a4ae\"/><rect x=\"144\" y=\"55\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"50\" y=\"68\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#f5b81c\"/><rect x=\"53\" y=\"86\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"63\" y=\"68\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#ef5350\"/><rect x=\"66\" y=\"86\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"76\" y=\"68\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#90a4ae\"/><rect x=\"79\" y=\"86\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"89\" y=\"68\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"var(--accent)\"/><rect x=\"92\" y=\"86\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"102\" y=\"68\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#f5b81c\"/><rect x=\"105\" y=\"86\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"115\" y=\"68\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#ef5350\"/><rect x=\"118\" y=\"86\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"128\" y=\"68\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"#90a4ae\"/><rect x=\"131\" y=\"86\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"141\" y=\"68\" width=\"8\" height=\"19\" rx=\"3.5\" fill=\"var(--accent)\"/><rect x=\"144\" y=\"86\" width=\"2\" height=\"9\" fill=\"#cfd8dc\"/><rect x=\"92\" y=\"106\" width=\"16\" height=\"6\" rx=\"2\" fill=\"#cfd8dc\"/>", "5": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><ellipse cx=\"56\" cy=\"110\" rx=\"32\" ry=\"7\" fill=\"#37474f\"/><rect x=\"40\" y=\"102\" width=\"32\" height=\"8\" rx=\"3\" fill=\"#455a64\"/><path d=\"M56 104 L56 70 L104 44\" fill=\"none\" stroke=\"#78909c\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"56\" cy=\"70\" r=\"5\" fill=\"#455a64\"/><circle cx=\"104\" cy=\"44\" r=\"5\" fill=\"#455a64\"/><circle cx=\"142\" cy=\"50\" r=\"32\" fill=\"#37474f\"/><circle cx=\"142\" cy=\"50\" r=\"27\" fill=\"#e0f7fa\" opacity=\".85\"/><circle cx=\"142\" cy=\"50\" r=\"29.5\" fill=\"none\" stroke=\"#ffd54f\" stroke-width=\"3\" stroke-dasharray=\"2.5 5\"/><circle cx=\"142\" cy=\"50\" r=\"20\" fill=\"none\" stroke=\"#fff\" stroke-width=\"1.5\" opacity=\".7\"/><path d=\"M126 36 q8 -10 22 -8\" fill=\"none\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linecap=\"round\" opacity=\".9\"/><line x1=\"108\" y1=\"46\" x2=\"115\" y2=\"48\" stroke=\"#455a64\" stroke-width=\"5\" stroke-linecap=\"round\"/>", "6": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><path d=\"M140 24 C140 2 66 2 66 38\" fill=\"none\" stroke=\"#222\" stroke-width=\"3\" stroke-linecap=\"round\"/><rect x=\"22\" y=\"36\" width=\"66\" height=\"76\" rx=\"9\" fill=\"#eceff1\" stroke=\"#90a4ae\" stroke-width=\"2\"/><rect x=\"30\" y=\"44\" width=\"50\" height=\"26\" rx=\"3\" fill=\"#b9dccc\" stroke=\"#546e7a\" stroke-width=\"1.5\"/><text x=\"76\" y=\"64\" text-anchor=\"end\" font-size=\"17\" font-family=\"IBM Plex Mono,ui-monospace,monospace\" fill=\"#143127\">7.02</text><text x=\"34\" y=\"53\" font-size=\"6.5\" font-family=\"IBM Plex Mono,ui-monospace,monospace\" fill=\"#143127\">pH</text><circle cx=\"38\" cy=\"88\" r=\"6\" fill=\"var(--accent)\"/><circle cx=\"56\" cy=\"88\" r=\"6\" fill=\"#90a4ae\"/><circle cx=\"74\" cy=\"88\" r=\"6\" fill=\"#90a4ae\"/><rect x=\"34\" y=\"100\" width=\"42\" height=\"4\" rx=\"2\" fill=\"#cfd8dc\"/><rect x=\"136\" y=\"24\" width=\"8\" height=\"74\" rx=\"3\" fill=\"#cfd8dc\" stroke=\"#90a4ae\" stroke-width=\"1.5\"/><circle cx=\"140\" cy=\"100\" r=\"5\" fill=\"#fff\" stroke=\"#90a4ae\" stroke-width=\"1.5\"/><path d=\"M114 52 L114 108 Q114 116 122 116 L158 116 Q166 116 166 108 L166 52\" fill=\"#e3f2fd\" fill-opacity=\".55\" stroke=\"#607d8b\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M115.5 80 H164.5 V108 Q164.5 114.5 158 114.5 H122 Q115.5 114.5 115.5 108Z\" fill=\"#4dd0e1\" opacity=\".6\"/><line x1=\"122\" y1=\"60\" x2=\"122\" y2=\"74\" stroke=\"#fff\" stroke-width=\"3\" stroke-linecap=\"round\" opacity=\".8\"/>", "7": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><defs><radialGradient id=\"th7\"><stop offset=\"0\" stop-color=\"#fff7b0\"/><stop offset=\".25\" stop-color=\"#ffb300\"/><stop offset=\".55\" stop-color=\"#e53935\"/><stop offset=\".8\" stop-color=\"#7b1fa2\"/><stop offset=\"1\" stop-color=\"#1a237e\"/></radialGradient></defs><rect x=\"76\" y=\"94\" width=\"48\" height=\"22\" rx=\"6\" fill=\"#263238\"/><rect x=\"46\" y=\"14\" width=\"108\" height=\"86\" rx=\"13\" fill=\"#37474f\"/><rect x=\"54\" y=\"22\" width=\"92\" height=\"62\" rx=\"5\" fill=\"#1a237e\"/><ellipse cx=\"100\" cy=\"54\" rx=\"38\" ry=\"28\" fill=\"url(#th7)\" opacity=\".5\"/><circle cx=\"96\" cy=\"52\" r=\"22\" fill=\"url(#th7)\"/><path d=\"M96 40 V64 M84 52 H108\" stroke=\"#fff\" stroke-width=\"1.5\" opacity=\".9\"/><circle cx=\"96\" cy=\"52\" r=\"9\" fill=\"none\" stroke=\"#fff\" stroke-width=\"1.5\" opacity=\".9\"/><rect x=\"116\" y=\"26\" width=\"26\" height=\"9\" rx=\"2\" fill=\"#000\" opacity=\".4\"/><circle cx=\"66\" cy=\"92\" r=\"3.5\" fill=\"#90a4ae\"/><circle cx=\"80\" cy=\"92\" r=\"3.5\" fill=\"#90a4ae\"/><circle cx=\"134\" cy=\"92\" r=\"4\" fill=\"var(--accent)\"/>", "8": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><rect x=\"150\" y=\"32\" width=\"26\" height=\"17\" rx=\"2\" fill=\"#cfd8dc\" stroke=\"#78909c\"/><rect x=\"150\" y=\"53\" width=\"26\" height=\"17\" rx=\"2\" fill=\"#cfd8dc\" stroke=\"#78909c\"/><rect x=\"150\" y=\"75\" width=\"26\" height=\"28\" rx=\"2\" fill=\"#b0bec5\" stroke=\"#78909c\"/><rect x=\"28\" y=\"18\" width=\"130\" height=\"94\" rx=\"8\" fill=\"#1b7a3d\"/><rect x=\"28\" y=\"18\" width=\"130\" height=\"94\" rx=\"8\" fill=\"none\" stroke=\"#0f5a2b\" stroke-width=\"2\"/><rect x=\"42\" y=\"20\" width=\"102\" height=\"14\" rx=\"2\" fill=\"#1b1b1b\"/><rect x=\"46\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"46\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"51\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"51\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"56\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"56\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"61\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"61\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"66\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"66\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"71\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"71\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"76\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"76\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"81\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"81\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"86\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"86\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"91\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"91\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"96\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"96\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"101\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"101\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"106\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"106\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"111\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"111\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"116\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"116\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"121\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"121\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"126\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"126\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"131\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"131\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"136\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"136\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"141\" y=\"23\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"141\" y=\"28\" width=\"2.6\" height=\"2.6\" fill=\"#ffd54f\"/><rect x=\"72\" y=\"46\" width=\"36\" height=\"36\" rx=\"3\" fill=\"#b0bec5\" stroke=\"#78909c\"/><rect x=\"78\" y=\"52\" width=\"24\" height=\"24\" rx=\"2\" fill=\"#90a4ae\"/><rect x=\"116\" y=\"48\" width=\"22\" height=\"15\" rx=\"2\" fill=\"#263238\"/><rect x=\"116\" y=\"68\" width=\"22\" height=\"12\" rx=\"2\" fill=\"#37474f\"/><circle cx=\"50\" cy=\"66\" r=\"8\" fill=\"#c51a4a\"/><circle cx=\"50\" cy=\"66\" r=\"3\" fill=\"#ff7a9c\"/><circle cx=\"37\" cy=\"28\" r=\"3\" fill=\"#cfe8d5\" opacity=\".9\"/><circle cx=\"150\" cy=\"28\" r=\"0\"/><circle cx=\"37\" cy=\"102\" r=\"3\" fill=\"#cfe8d5\" opacity=\".9\"/><circle cx=\"148\" cy=\"102\" r=\"3\" fill=\"#cfe8d5\" opacity=\".9\"/><rect x=\"68\" y=\"104\" width=\"12\" height=\"7\" rx=\"1.5\" fill=\"#b0bec5\"/><rect x=\"88\" y=\"104\" width=\"12\" height=\"7\" rx=\"1.5\" fill=\"#b0bec5\"/><rect x=\"108\" y=\"104\" width=\"12\" height=\"7\" rx=\"1.5\" fill=\"#cfd8dc\"/><text x=\"118\" y=\"98\" font-size=\"9\" font-family=\"IBM Plex Mono,ui-monospace,monospace\" fill=\"#d9f2e0\">Pi 5</text>", "9": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><polygon points=\"40,96 140,96 140,103 40,103\" fill=\"#1f2b30\"/><polygon points=\"140,96 170,44 170,51 140,103\" fill=\"#263238\"/><polygon points=\"40,96 70,44 170,44 140,96\" fill=\"#455a64\"/><line x1=\"46.0\" y1=\"85.6\" x2=\"146.0\" y2=\"85.6\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><line x1=\"52.0\" y1=\"75.2\" x2=\"152.0\" y2=\"75.2\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><line x1=\"58.0\" y1=\"64.8\" x2=\"158.0\" y2=\"64.8\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><line x1=\"64.0\" y1=\"54.4\" x2=\"164.0\" y2=\"54.4\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><line x1=\"54.3\" y1=\"96\" x2=\"84.3\" y2=\"44\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><line x1=\"68.6\" y1=\"96\" x2=\"98.6\" y2=\"44\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><line x1=\"82.9\" y1=\"96\" x2=\"112.9\" y2=\"44\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><line x1=\"97.1\" y1=\"96\" x2=\"127.1\" y2=\"44\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><line x1=\"111.4\" y1=\"96\" x2=\"141.4\" y2=\"44\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><line x1=\"125.7\" y1=\"96\" x2=\"155.7\" y2=\"44\" stroke=\"#607d8b\" stroke-width=\"1\" opacity=\".7\"/><polygon points=\"40,96 70,44 170,44 140,96\" fill=\"none\" stroke=\"#78909c\" stroke-width=\"2\" stroke-linejoin=\"round\"/><circle cx=\"62\" cy=\"86\" r=\"5\" fill=\"#cfd8dc\" stroke=\"#78909c\" stroke-width=\"1.5\"/><circle cx=\"62\" cy=\"86\" r=\"1.8\" fill=\"#78909c\"/><path d=\"M62 86 C50 100 30 98 30 112\" fill=\"none\" stroke=\"#2e7d32\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><rect x=\"24\" y=\"110\" width=\"12\" height=\"6\" rx=\"1.5\" fill=\"#cfd8dc\"/>", "10": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><rect x=\"10\" y=\"52\" width=\"180\" height=\"16\" rx=\"8\" fill=\"#455a64\"/><rect x=\"84\" y=\"52\" width=\"32\" height=\"16\" fill=\"#37474f\" opacity=\".5\"/><rect x=\"38\" y=\"30\" width=\"124\" height=\"62\" rx=\"26\" fill=\"#1565c0\"/><rect x=\"45\" y=\"36\" width=\"110\" height=\"50\" rx=\"21\" fill=\"#e1f5fe\" opacity=\".9\"/><rect x=\"94\" y=\"36\" width=\"12\" height=\"50\" fill=\"#1565c0\"/><path d=\"M94 76 q6 8 12 0 v10 h-12z\" fill=\"#1565c0\"/><path d=\"M56 46 q12 -8 26 -6\" fill=\"none\" stroke=\"#fff\" stroke-width=\"4\" stroke-linecap=\"round\"/><path d=\"M116 48 q12 -8 26 -6\" fill=\"none\" stroke=\"#fff\" stroke-width=\"4\" stroke-linecap=\"round\"/><circle cx=\"45\" cy=\"45\" r=\"2.5\" fill=\"#0d47a1\"/><circle cx=\"155\" cy=\"45\" r=\"2.5\" fill=\"#0d47a1\"/><circle cx=\"45\" cy=\"77\" r=\"2.5\" fill=\"#0d47a1\"/><circle cx=\"155\" cy=\"77\" r=\"2.5\" fill=\"#0d47a1\"/>", "11": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><rect x=\"14\" y=\"58\" width=\"172\" height=\"16\" rx=\"2\" fill=\"#cfd8dc\" stroke=\"#90a4ae\" stroke-width=\"1.5\"/><line x1=\"26\" y1=\"58\" x2=\"26\" y2=\"66\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"34\" y1=\"58\" x2=\"34\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"42\" y1=\"58\" x2=\"42\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"50\" y1=\"58\" x2=\"50\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"58\" y1=\"58\" x2=\"58\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"66\" y1=\"58\" x2=\"66\" y2=\"66\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"74\" y1=\"58\" x2=\"74\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"82\" y1=\"58\" x2=\"82\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"90\" y1=\"58\" x2=\"90\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"98\" y1=\"58\" x2=\"98\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"106\" y1=\"58\" x2=\"106\" y2=\"66\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"114\" y1=\"58\" x2=\"114\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"122\" y1=\"58\" x2=\"122\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"130\" y1=\"58\" x2=\"130\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"138\" y1=\"58\" x2=\"138\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"146\" y1=\"58\" x2=\"146\" y2=\"66\" stroke=\"#455a64\" stroke-width=\"1\"/><line x1=\"154\" y1=\"58\" x2=\"154\" y2=\"63\" stroke=\"#455a64\" stroke-width=\"1\"/><rect x=\"14\" y=\"26\" width=\"9\" height=\"52\" rx=\"1.5\" fill=\"#b0bec5\" stroke=\"#78909c\" stroke-width=\"1.5\"/><rect x=\"60\" y=\"30\" width=\"9\" height=\"46\" rx=\"1.5\" fill=\"#b0bec5\" stroke=\"#78909c\" stroke-width=\"1.5\"/><rect x=\"66\" y=\"46\" width=\"68\" height=\"46\" rx=\"6\" fill=\"#37474f\"/><rect x=\"72\" y=\"52\" width=\"38\" height=\"18\" rx=\"2\" fill=\"#c9d8c5\"/><text x=\"107\" y=\"66\" text-anchor=\"end\" font-size=\"13\" font-family=\"IBM Plex Mono,ui-monospace,monospace\" fill=\"#1d2b1d\">37.5</text><circle cx=\"122\" cy=\"58\" r=\"4.5\" fill=\"#e53935\"/><circle cx=\"122\" cy=\"74\" r=\"4.5\" fill=\"#90a4ae\"/><circle cx=\"86\" cy=\"84\" r=\"4\" fill=\"#90a4ae\"/><rect x=\"14\" y=\"104\" width=\"44\" height=\"3\" rx=\"1.5\" fill=\"#000\" opacity=\".1\"/>", "12": "<ellipse cx=\"100\" cy=\"116\" rx=\"62\" ry=\"6\" fill=\"#000\" opacity=\".13\"/><rect x=\"38\" y=\"84\" width=\"124\" height=\"30\" rx=\"8\" fill=\"#eceff1\" stroke=\"#90a4ae\" stroke-width=\"2\"/><rect x=\"38\" y=\"80\" width=\"124\" height=\"9\" rx=\"4\" fill=\"#b0bec5\" stroke=\"#90a4ae\" stroke-width=\"1.5\"/><circle cx=\"140\" cy=\"102\" r=\"8\" fill=\"#455a64\"/><path d=\"M140 102 L144 96\" stroke=\"#fff\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"58\" cy=\"100\" r=\"3.5\" fill=\"#66bb6a\"/><rect x=\"76\" y=\"104\" width=\"30\" height=\"4\" rx=\"2\" fill=\"#cfd8dc\"/><path d=\"M72 22 L72 76 Q72 82 78 82 L122 82 Q128 82 128 76 L128 22\" fill=\"#e3f2fd\" fill-opacity=\".55\" stroke=\"#607d8b\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M73.5 46 Q86 40 100 46 T126.5 46 V76 Q126.5 80.5 122 80.5 H78 Q73.5 80.5 73.5 76Z\" fill=\"#80deea\" opacity=\".65\"/><rect x=\"91\" y=\"72\" width=\"18\" height=\"6\" rx=\"3\" fill=\"#fff\" stroke=\"#607d8b\" stroke-width=\"1.5\"/><circle cx=\"86\" cy=\"62\" r=\"2.5\" fill=\"#fff\" opacity=\".8\"/><circle cx=\"112\" cy=\"56\" r=\"2\" fill=\"#fff\" opacity=\".8\"/><circle cx=\"100\" cy=\"64\" r=\"1.6\" fill=\"#fff\" opacity=\".8\"/><line x1=\"72\" y1=\"22\" x2=\"66\" y2=\"18\" stroke=\"#607d8b\" stroke-width=\"3\" stroke-linecap=\"round\"/>"};
+  ART.box='<ellipse cx="100" cy="112" rx="56" ry="6" fill="#000" opacity=".13"/><rect x="52" y="42" width="96" height="64" rx="4" fill="#C8A165"/><path d="M52 42 L100 60 L148 42" fill="none" stroke="#9C7A45" stroke-width="3"/><rect x="88" y="42" width="24" height="64" fill="#E3C48F" opacity=".8"/><rect x="60" y="82" width="22" height="14" rx="2" fill="#fff" opacity=".8"/>';
+  function pic(p){
+    var svg='<svg viewBox="0 0 200 130" role="img" aria-label="'+p.name+'">'+(ART[p.id]||ART.box)+'</svg>';
+    var im=(p.img||PHOTO_DIR)?'<img loading="lazy" alt="'+p.name+'" src="'+(p.img||PHOTO_DIR+p.id+".jpg")+'" onerror="this.remove()">':"";
+    return '<div class="pic">'+svg+im+(isB(p)?'<span class="bb">✓ Bought</span>':'')+'<span class="sku">LTV-'+String(p.id).padStart(3,"0")+'</span><span class="tag">'+p.spec+'</span><i>'+p.cat+'</i></div>';
+  }
+
+
+  /* ===== Countries and payment methods (confirm with your payment provider) ===== */
+  var COUNTRIES={ZM:{n:"Zambia",cur:"ZMW",pay:["MTN MoMo","Airtel Money","Zamtel Kwacha","Bank transfer"]},
+    KE:{n:"Kenya",cur:"KES",pay:["M-Pesa","Airtel Money","Bank transfer"]},TZ:{n:"Tanzania",cur:"TZS",pay:["M-Pesa","Tigo Pesa","Airtel Money","Bank transfer"]},
+    UG:{n:"Uganda",cur:"UGX",pay:["MTN MoMo","Airtel Money","Bank transfer"]},RW:{n:"Rwanda",cur:"RWF",pay:["MTN MoMo","Airtel Money","Bank transfer"]},
+    MW:{n:"Malawi",cur:"MWK",pay:["Airtel Money","TNM Mpamba","Bank transfer"]},ZW:{n:"Zimbabwe",cur:"USD",pay:["EcoCash","OneMoney","Bank transfer"]},
+    BW:{n:"Botswana",cur:"BWP",pay:["Orange Money","MyZaka","Bank transfer"]},ZA:{n:"South Africa",cur:"ZAR",pay:["Instant EFT","Bank transfer"]},
+    NA:{n:"Namibia",cur:"NAD",pay:["Bank transfer"]},MZ:{n:"Mozambique",cur:"MZN",pay:["M-Pesa","e-Mola","Bank transfer"]},
+    CD:{n:"DR Congo",cur:"USD",pay:["M-Pesa","Airtel Money","Orange Money"]},NG:{n:"Nigeria",cur:"NGN",pay:["Bank transfer","OPay"]},
+    GH:{n:"Ghana",cur:"GHS",pay:["MTN MoMo","Telecel Cash","AirtelTigo Money","Bank transfer"]},OT:{n:"Other African country",cur:"USD",pay:["Bank transfer","Western Union / MoneyGram"]}};
+  var ST={g:function(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},s:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+  /* Seller details. Owner settings (footer) change these in one browser; paste the exported code here to change them for everyone. */
+  var CFG0={name:"LabTechVision Shop",phone:"+260 963 363 793",whatsapp:"260963363793",email:"unclechichi88@gmail.com",paypal:"",cardLink:"",accounts:{},banner:{on:false,text:""}};
+  var CFG=Object.assign({},CFG0,ST.g("ltv-cfg",{}));
+  function esc(x){return String(x==null?"":x).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function modal(h){var b=document.createElement("div");b.className="mback";b.innerHTML='<div class="mbox" role="dialog" aria-modal="true">'+h+'</div>';document.body.appendChild(b);b.addEventListener("mousedown",function(e){if(e.target===b)b.remove()});return b}
+  function copts(sel){return Object.keys(COUNTRIES).map(function(k){return '<option value="'+k+'"'+(k===sel?" selected":"")+'>'+COUNTRIES[k].n+'</option>'}).join("")}
+  function setCountry(k){if(!COUNTRIES[k])return;S.country=k;S.cur=COUNTRIES[k].cur;ST.s("ltv-country",k);var c=document.getElementById("ctry");if(c)c.value=k;save();render()}
+  async function hp(pw,salt){try{var d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+pw));return Array.from(new Uint8Array(d)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}catch(e){return btoa(salt+pw)}}
+  function me(){var e=ST.g("ltv-session",null);return ST.g("ltv-users",[]).filter(function(u){return u.email===e})[0]}
+  function applyCfg(){
+    var tel=CFG.phone.replace(/[^\d+]/g,"");
+    document.querySelectorAll("[data-ph]").forEach(function(a){a.textContent=CFG.phone;a.href="tel:"+tel});
+    document.querySelectorAll("[data-em]").forEach(function(a){a.textContent=CFG.email;a.href="mailto:"+CFG.email});
+    document.querySelectorAll("[data-wa]").forEach(function(a){a.href="https://wa.me/"+CFG.whatsapp});
+    var b=document.getElementById("adBar");b.hidden=!(CFG.banner&&CFG.banner.on&&CFG.banner.text);b.textContent=CFG.banner?CFG.banner.text:""}
+  function acctBar(){
+    var u=me(),h=document.getElementById("acct");
+    h.innerHTML=u?'<button class="btn" id="aMe" type="button">Hi, '+esc(u.name.split(" ")[0])+'</button><button class="btn" id="aOut" type="button">Sign out</button>':'<button class="btn" id="aIn" type="button">Sign in</button><button class="btn primary" id="aReg" type="button">Register</button>';
+    var g=function(i){return document.getElementById(i)};
+    if(u){g("aMe").onclick=profile;g("aOut").onclick=function(){ST.s("ltv-session",null);acctBar();toast("You are signed out.")}}
+    else{g("aIn").onclick=function(){auth("in")};g("aReg").onclick=function(){auth("reg")}}}
+  function profile(){
+    var u=me();if(!u)return;
+    var b=modal('<h3>My account</h3><div class="help">Name: '+esc(u.name)+'<br>Age: '+esc(u.age)+' years<br>Country: '+esc((COUNTRIES[u.country]||{}).n)+'<br>City / address: '+esc(u.city)+'<br>Phone: '+esc(u.phone)+'<br>Email: '+esc(u.email)+'<br>Offers and adverts: '+(u.optin?"yes":"no")+'</div><div class="acts"><button class="btn" id="x" type="button">Close</button><button class="btn primary" id="o" type="button">Sign out</button></div>');
+    b.querySelector("#x").onclick=function(){b.remove()};b.querySelector("#o").onclick=function(){ST.s("ltv-session",null);b.remove();acctBar();toast("You are signed out.")}}
+  function auth(tab){
+    var b=modal('<div class="seg" style="justify-self:start"><button type="button" data-t="in" aria-pressed="'+(tab==="in")+'">Sign in</button><button type="button" data-t="reg" aria-pressed="'+(tab==="reg")+'">Register</button></div>'+
+    '<div class="fg" id="fIn"'+(tab==="in"?"":" hidden")+'><label>Email<input type="email" id="lE" autocomplete="email"></label><label>Password<input type="password" id="lP" autocomplete="current-password"></label><div class="acts"><button class="btn primary" id="lGo" type="button">Sign in</button></div></div>'+
+    '<div class="fg" id="fReg"'+(tab==="reg"?"":" hidden")+'><label>Full name<input type="text" id="rN" autocomplete="name"></label><div class="two"><label>Age (years)<input type="number" id="rA" min="10" max="120"></label><label>Country<select id="rC">'+copts(S.country)+'</select></label></div>'+
+    '<label>City / delivery address<input type="text" id="rT"></label><div class="two"><label>Phone / WhatsApp<input type="tel" id="rP" placeholder="+260 97 123 4567"></label><label>Email<input type="email" id="rE"></label></div>'+
+    '<label>Password (6+ characters)<input type="password" id="rW" autocomplete="new-password"></label><label class="opt"><input type="checkbox" id="rO" checked> Send me offers and adverts</label><div class="acts"><button class="btn primary" id="rGo" type="button">Create account</button></div>'+
+    '<p style="font-size:12px;color:var(--muted)">Preview build: accounts are saved in this browser only.</p></div>');
+    b.querySelectorAll("[data-t]").forEach(function(x){x.onclick=function(){var t=x.dataset.t;b.querySelector("#fIn").hidden=t!=="in";b.querySelector("#fReg").hidden=t!=="reg";b.querySelectorAll("[data-t]").forEach(function(y){y.setAttribute("aria-pressed",y===x)})}});
+    var v=function(i){return b.querySelector(i).value.trim()};
+    b.querySelector("#lGo").onclick=async function(){var e=v("#lE").toLowerCase(),u=ST.g("ltv-users",[]).filter(function(z){return z.email===e})[0];
+      if(!u||u.hash!==await hp(b.querySelector("#lP").value,u.salt)){toast("Email or password is not right.");return}
+      ST.s("ltv-session",u.email);setCountry(u.country);b.remove();acctBar();runPend();toast("Welcome back, "+u.name.split(" ")[0]+".")};
+    b.querySelector("#rGo").onclick=async function(){
+      var u={name:v("#rN"),age:+v("#rA"),country:v("#rC"),city:v("#rT"),phone:v("#rP"),email:v("#rE").toLowerCase(),optin:b.querySelector("#rO").checked,joined:new Date().toISOString().slice(0,10)};
+      if(!u.name||!(u.age>=10&&u.age<=120)||!u.city||u.phone.replace(/\D/g,"").length<9||!/^\S+@\S+\.\S+$/.test(u.email)||v("#rW").length<6){toast("Please complete every field. Password needs 6+ characters.");return}
+      var all=ST.g("ltv-users",[]);if(all.some(function(z){return z.email===u.email})){toast("That email is already registered. Please sign in.");return}
+      u.salt=Math.random().toString(36).slice(2);u.hash=await hp(b.querySelector("#rW").value,u.salt);all.push(u);ST.s("ltv-users",all);ST.s("ltv-session",u.email);
+      setCountry(u.country);b.remove();acctBar();runPend();toast("Welcome, "+u.name.split(" ")[0]+"!")}}
+  function payHelp(m,ref){var d=CFG.accounts[m]||(m==="PayPal"&&CFG.paypal?"paypal.me/"+CFG.paypal:0)||(m==="Visa / Mastercard"&&CFG.cardLink?"use the secure card link below":0)||"Message us on WhatsApp "+CFG.phone+" for the payment details.";return "Pay by <b>"+esc(m)+"</b>: "+esc(d)+". Use "+esc(ref)+" as the reference."}
+  function openPay(){
+    var ids=Object.keys(S.cart);if(!me()){pend=openPay;auth("reg");toast("Create a free account or sign in to place your order.");return}
+    if(!ids.length)return;
+    var t=0;ids.forEach(function(id){t+=price(byId(+id))*S.cart[id]});
+    var u=me(),C=COUNTRIES[S.country],PL=C.pay.concat(["Visa / Mastercard","PayPal"]);Object.keys(CFG.accounts).forEach(function(k){if(PL.indexOf(k)<0)PL.push(k)});
+    var b=modal('<h3>Checkout · '+money(t)+'</h3><p style="font-size:13px;color:var(--muted)">Delivering to '+esc(C.n)+' (change the country at the top of the page).</p>'+
+      '<label>Full name<input type="text" id="pN" value="'+esc(u?u.name:"")+'"></label><label>Phone (mobile money and delivery)<input type="tel" id="pP" value="'+esc(u?u.phone:"")+'"></label><label>Delivery town / address<input type="text" id="pA" value="'+esc(u?u.city:"")+'"></label>'+
+      '<div class="fg">'+PL.map(function(k,i){return '<label class="opt"><input type="radio" name="pm" value="'+i+'"'+(i?"":" checked")+'>'+esc(k)+'</label>'}).join("")+'</div><div class="help" id="pH"></div><div class="acts"><button class="btn" type="button" id="pX">Cancel</button><button class="btn primary" type="button" id="pOK">Confirm order</button></div>');
+    var pm=function(){return PL[+b.querySelector("input[name=pm]:checked").value]};
+    var help=function(){b.querySelector("#pH").innerHTML=payHelp(pm(),"your order number")};help();b.addEventListener("change",help);
+    b.querySelector("#pX").onclick=function(){b.remove()};
+    b.querySelector("#pOK").onclick=function(){
+      var n=b.querySelector("#pN").value.trim(),ph=b.querySelector("#pP").value.trim(),ad=b.querySelector("#pA").value.trim();
+      if(!n||ph.replace(/\D/g,"").length<9||!ad){toast("Enter your name, a valid phone number and delivery address.");return}
+      var items=ids.map(function(id){return {id:+id,q:S.cart[id]}}),m=pm(),o=placeOrder(items);o.pay=m;o.cust=n;o.appr=false;o.email=u?u.email:"";var pl="";if(m==="PayPal"&&CFG.paypal)pl='<a class="btn primary" target="_blank" rel="noopener" href="https://paypal.me/'+encodeURIComponent(CFG.paypal)+'/'+t.toFixed(2)+'USD">Pay with PayPal now</a>';if(m==="Visa / Mastercard"&&/^https:\/\//.test(CFG.cardLink))pl='<a class="btn primary" target="_blank" rel="noopener" href="'+esc(CFG.cardLink)+'">Pay by card now</a>';
+      var lines=items.map(function(i){var p=byId(i.id);return i.q+" x "+p.name+" ("+money(price(p)*i.q)+")"}).join("\n");
+      var msg=encodeURIComponent("Order "+o.id+"\n"+lines+"\nTotal: "+money(t)+"\nPay by: "+m+"\nName: "+n+"\nPhone: "+ph+"\nCountry: "+C.n+"\nAddress: "+ad);
+      S.cart={};$("#cart").hidden=true;render();
+      b.querySelector(".mbox").innerHTML='<h3>Order '+o.id+' received</h3><div class="help">'+payHelp(m,o.id)+'</div><p style="font-size:13.5px;color:var(--muted)">Send your payment, then message us your order. Every payment is checked and approved before we ship.</p><div class="acts'+'">'+pl+'<a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/'+CFG.whatsapp+'?text='+msg+'">Send order on WhatsApp</a><button class="btn" type="button" id="pD">Done</button></div>';
+      b.querySelector("#pD").onclick=function(){b.remove()}}}
+  function owner(){
+    var users=ST.g("ltv-users",[]),opt=users.filter(function(u){return u.optin}),acc=Object.keys(CFG.accounts).map(function(k){return k+": "+CFG.accounts[k]}).join("\n");
+    var b=modal('<h3>Owner settings</h3><p class="help">Changes save in this browser. To change them for every visitor, copy the code at the bottom into index.html (see README).</p>'+
+      '<label>Business name<input type="text" id="oN" value="'+esc(CFG.name)+'"></label><div class="two"><label>Phone shown on site<input type="text" id="oP" value="'+esc(CFG.phone)+'"></label><label>WhatsApp number (digits, with country code)<input type="text" id="oW" value="'+esc(CFG.whatsapp)+'"></label></div>'+
+      '<label>Email<input type="email" id="oE" value="'+esc(CFG.email)+'"></label><div class="two"><label>PayPal.me name<input type="text" id="oPp" value="'+esc(CFG.paypal)+'"></label><label>Card payment link (https)<input type="text" id="oCl" value="'+esc(CFG.cardLink)+'"></label></div><label>Payment details, one per line, like  MTN MoMo: 0960 000 000<textarea id="oA" rows="5">'+esc(acc)+'</textarea></label>'+
+      '<label class="opt"><input type="checkbox" id="oBo"'+(CFG.banner.on?" checked":"")+'> Show an advert banner at the top of the shop</label><label>Banner text<input type="text" id="oBt" value="'+esc(CFG.banner.text)+'"></label>'+
+      '<h3>Products from AliExpress and eBay</h3><div id="oPL"></div><div class="two"><label>Product name<input type="text" id="aN"></label><label>Bought from<select id="aSrc"><option>AliExpress</option><option>eBay</option></select></label></div><div class="two"><label>Cost in US dollars<input type="number" id="aC" min="0" step="0.01"></label><label>Stock<input type="number" id="aQ" min="0"></label></div><div class="two"><label>Spec (for example 60 W)<input type="text" id="aS"></label><label>Category<input type="text" id="aK"></label></div><label>Supplier item link<input type="text" id="aL"></label><label>Photo link (https, optional)<input type="text" id="aI"></label><div class="acts" style="justify-content:flex-start"><button class="btn primary" id="aAdd" type="button">Add product</button></div><h3>Send an advert</h3><label>Product to promote<select id="oPr"><option value="">(none)</option>'+imported().map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+'</option>'}).join("")+'</select></label>'+
+      '<label>Subject<input type="text" id="oSu" value="Special offer from '+esc(CFG.name)+'"></label><label>Message<textarea id="oAd" rows="4"></textarea></label>'+
+      '<div class="acts" style="justify-content:flex-start"><button class="btn primary" id="oWA" type="button">Send on WhatsApp</button><button class="btn primary" id="oEM" type="button">Email ('+opt.length+' opted-in buyers)</button><button class="btn" id="oCP" type="button">Copy</button></div>'+
+      '<p style="font-size:12px;color:var(--muted)">WhatsApp opens so you can pick contacts or groups. Email opens your mail app with opted-in buyers registered in this browser; for a full mailing list use a mailing service.</p>'+
+      '<label>Code for index.html<textarea id="oC" rows="4" readonly></textarea></label><div class="acts"><button class="btn" id="oX" type="button">Close</button><button class="btn primary" id="oS" type="button">Save</button></div>');
+    var q=function(i){return b.querySelector(i)};prodUI(b);
+    q("#oPr").onchange=function(){var p=byId(+this.value);if(p)q("#oAd").value="New at "+CFG.name+": "+p.name+" for "+money(price(p))+". Order on WhatsApp "+CFG.phone+" or visit "+location.href.split("#")[0]};
+    q("#oWA").onclick=function(){window.open("https://wa.me/?text="+encodeURIComponent(q("#oAd").value),"_blank")};
+    q("#oEM").onclick=function(){location.href="mailto:?bcc="+opt.map(function(u){return u.email}).join(",")+"&subject="+encodeURIComponent(q("#oSu").value)+"&body="+encodeURIComponent(q("#oAd").value)};
+    q("#oCP").onclick=function(){try{navigator.clipboard.writeText(q("#oAd").value);toast("Copied.")}catch(e){q("#oAd").select()}};
+    function read(){var a={};q("#oA").value.split("\n").forEach(function(l){var i=l.indexOf(":");if(i>0&&l.slice(i+1).trim())a[l.slice(0,i).trim()]=l.slice(i+1).trim()});
+      return {name:q("#oN").value.trim(),phone:q("#oP").value.trim(),whatsapp:q("#oW").value.replace(/\D/g,""),email:q("#oE").value.trim(),paypal:q("#oPp").value.trim().replace(/^.*paypal\.me\//,""),cardLink:q("#oCl").value.trim(),accounts:a,banner:{on:q("#oBo").checked,text:q("#oBt").value.trim()}}}
+    b.addEventListener("input",function(){q("#oC").value="var CFG0="+JSON.stringify(read())+";"});q("#oC").value="var CFG0="+JSON.stringify(read())+";";
+    q("#oX").onclick=function(){b.remove()};
+    q("#oS").onclick=function(){var c=read();ST.s("ltv-cfg",c);CFG=Object.assign({},CFG0,c);applyCfg();toast("Saved in this browser.");b.remove()}}
+  function boot(){
+    var c=document.getElementById("ctry");c.innerHTML=copts(S.country);
+    var k=ST.g("ltv-country",null);if(k&&COUNTRIES[k])setCountry(k);else{S.cur=COUNTRIES.ZM.cur;render()}
+    c.onchange=function(){setCountry(c.value)};
+    S.ebay=!!ST.g("ltv-ebay",null);loadProds();S.orders=ST.g("ltv-orders",[]);loaded=true;applyCfg();acctBar();render();
+    document.getElementById("ownBtn").onclick=function(e){e.preventDefault();owner()};
+    if(location.hash==="#owner")owner()}
+
+  var pend=null,loaded=false;
+  function runPend(){if(pend){var f=pend;pend=null;f()}}
+  function addItem(k){var p=byId(+k),q=S.cart[k]||0;if(q<p.stock)S.cart[k]=q+1;toast(p.name+" added to cart");render()}
+  function isB(p){var u=me();return !!u&&S.orders.some(function(o){return o.email===u.email&&o.items.some(function(i){return i.id===p.id})})}
+  function loadProds(){var pr=ST.g("ltv-prods",{added:[],removed:[]});pr.added.forEach(function(p){if(!byId(p.id))P.push(p)});pr.removed.forEach(function(id){var p=byId(id);if(p){p.removed=true;p.imported=false}})}
+  function updateConn(){
+    var c=document.getElementById("conn");if(!c)return;var e=ST.g("ltv-ebay",null);
+    c.innerHTML='<div class="cbox"><span><b>AliExpress</b><br><small>'+(S.ali?"Connected":"Not connected")+'</small></span><button class="btn'+(S.ali?"":" primary")+'" type="button" id="cAli">'+(S.ali?"Disconnect":"Connect AliExpress")+'</button></div>'+
+    '<div class="cbox"><span><b>eBay</b><br><small>'+(S.ebay?"Connected"+(e&&e.user?" as "+esc(e.user):""):"Not connected")+'</small></span><button class="btn'+(S.ebay?"":" primary")+'" type="button" id="cEb">'+(S.ebay?"Disconnect":"Connect eBay")+'</button></div>';
+    document.getElementById("cAli").onclick=function(){S.ali=!S.ali;log(S.ali?"AliExpress account connected.":"AliExpress disconnected.",false);render()};
+    document.getElementById("cEb").onclick=function(){
+      if(S.ebay){S.ebay=false;ST.s("ltv-ebay",null);log("eBay disconnected.",false);render();return}
+      var b=modal('<h3>Connect eBay</h3><label>eBay username or store link<input type="text" id="eU"></label><p class="help">Preview connection: this saves your eBay name here and turns on eBay sourcing in this page. A live link needs eBay Developer keys and sign-in through a sync app or plugin (see Go live).</p><div class="acts"><button class="btn" id="eX" type="button">Cancel</button><button class="btn primary" id="eOK" type="button">Connect</button></div>');
+      b.querySelector("#eX").onclick=function(){b.remove()};
+      b.querySelector("#eOK").onclick=function(){var u=b.querySelector("#eU").value.trim();if(!u){toast("Enter your eBay username or store link.");return}S.ebay=true;ST.s("ltv-ebay",{user:u});log("eBay account connected.",false);b.remove();render()}}}
+  function prodUI(b){
+    var q=function(i){return b.querySelector(i)};
+    function list(){var el=q("#oPL");el.innerHTML=P.filter(function(p){return p.imported&&!p.removed}).map(function(p){return '<div class="orderrow"><span><b>'+esc(p.name)+'</b> · '+esc(p.src)+(p.bought?' · <span class="pill good">Bought from supplier: '+p.bought+'</span>':'')+'</span><button class="btn" type="button" data-rm="'+p.id+'">Remove</button></div>'}).join("")||"<p>No products yet.</p>";
+      el.querySelectorAll("[data-rm]").forEach(function(x){x.onclick=function(){var p=byId(+x.dataset.rm);p.removed=true;p.imported=false;delete S.cart[p.id];var pr=ST.g("ltv-prods",{added:[],removed:[]});pr.removed.push(p.id);ST.s("ltv-prods",pr);list();render()}})}
+    list();
+    q("#aAdd").onclick=function(){var g=function(i){return q(i).value.trim()},name=g("#aN"),cost=+g("#aC");
+      if(!name||!(cost>0)){toast("Enter a product name and the supplier cost in US dollars.");return}
+      var pr=ST.g("ltv-prods",{added:[],removed:[]}),id=Math.max.apply(null,P.map(function(p){return p.id}).concat(pr.removed,[0]))+1;
+      var p={id:id,name:name,spec:g("#aS")||"New",cat:g("#aK")||"General",src:g("#aSrc"),cost:cost,stock:+g("#aQ")||10,rating:4.6,ship:12,imported:true,link:g("#aL"),img:/^https:\/\//.test(g("#aI"))?g("#aI"):""};
+      P.push(p);pr.added.push(p);ST.s("ltv-prods",pr);list();render();toast("Product added to the shop.")}}
+  setTimeout(boot,0);
+  var S={platform:"woo",cur:"ZMW",country:"ZM",mode:"ai",markup:60,minRating:4.5,maxShip:15,
+    rates:{USD:1,ZMW:22.5,TZS:2600,UGX:3700,RWF:1400,MWK:1750,BWP:13.6,NAD:17.8,MZN:64,GHS:15,EUR:0.92,GBP:0.78,ZAR:17.8,INR:84,NGN:1500,KES:129},
+    ali:false,store:false,found:false,did4:false,last:{},cart:{},orders:[],log:[],busy:false,auto:false,tick:0};
+  var timer=null;
+
+  try{var sv=JSON.parse(localStorage.getItem("ltv-prefs")||"{}");
+    if(sv.cur&&S.rates[sv.cur])S.cur=sv.cur; }catch(e){}
+  function save(){try{localStorage.setItem("ltv-prefs",JSON.stringify({cur:S.cur,platform:S.platform}))}catch(e){}}
+
+  function money(usd){var r=S.rates[S.cur],big=r>=50;
+    return new Intl.NumberFormat(undefined,{style:"currency",currency:S.cur,minimumFractionDigits:big?0:2,maximumFractionDigits:big?0:2}).format(usd*r)}
+  function price(p){return Math.ceil(p.cost*(1+S.markup/100))-0.01}
+  function pname(){return S.platform==="shopify"?"Shopify":"WooCommerce"}
+  function now(){var d=new Date();return d.toTimeString().slice(0,8)}
+  function log(m,ai){S.log.unshift({t:now(),m:m,ai:ai});if(S.log.length>40)S.log.pop()}
+  function toast(m){var t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(function(){t.hidden=true},2600)}
+  function imported(){return P.filter(function(p){return p.imported})}
+  function feed(){return P.filter(function(p){return p.found&&!p.imported})}
+  function byId(id){return P.filter(function(p){return p.id===id})[0]}
+  function cnt(st){return S.orders.filter(function(o){return o.st===st}).length}
+  function rnd(n){return Math.floor(Math.random()*n)}
+
+  /* ---------- steps ---------- */
+  var LABEL={1:"Connect",2:"Connect",3:"Find products",4:"Import selected",5:"Sync now",6:"Pull orders",7:"Send to suppliers",8:"Sync tracking"};
+  function title(n){return [null,"Connect your AliExpress account","Connect your "+(S.platform==="shopify"?"Shopify store":"WooCommerce store"),"Find products on AliExpress and eBay","Import products into your store","Synchronise prices and stock","Receive customer orders","Send orders to AliExpress for fulfilment","Synchronise tracking back to your store"][n]}
+  var DESC=[null,
+    "Authorise access to your supplier account.",
+    "Link the store that will list and sell the products.",
+    "Search supplier listings. The AI keeps only listings that meet your rating and shipping rules.",
+    "Create store products with your markup applied.",
+    "Update supplier cost and stock so prices and availability stay correct.",
+    "Collect new customer orders from the store.",
+    "Place each order with the supplier. eBay-sourced lines go to eBay.",
+    "Write supplier tracking numbers onto the orders and notify the customer."];
+  function reason(n){
+    if(n===3&&!S.ali)return "Connect AliExpress first";
+    if(n===4){if(!S.store)return "Connect your store first";if(!feed().length)return "Find products first"}
+    if(n===5){if(!S.ali)return "Connect AliExpress first";if(!imported().length)return "Import products first"}
+    if(n===6){if(!S.store)return "Connect your store first";if(!S.orders.some(function(o){return o.st==="placed"&&o.appr!==false}))return "No approved orders waiting"}
+    if(n===7){if(!S.ali)return "Connect AliExpress first";if(!cnt("received"))return "No received orders"}
+    if(n===8&&!cnt("sent"))return "No orders waiting for tracking";
+    return "";
+  }
+  function isDone(n){return n===1?S.ali:n===2?S.store:n===3?S.found:n===4?(S.did4&&!feed().length):false}
+  function run(n,ai){
+    var who=ai;
+    if(n===1){S.ali=true;log(ai?"AI linked the AliExpress account and checked API access.":"AliExpress account connected.",who)}
+    if(n===2){S.store=true;log((ai?"AI connected the ":"Connected the ")+pname()+" store.",who)}
+    if(n===3){
+      var c=P.filter(function(p){return !p.imported&&!p.removed&&(p.src!=="eBay"||S.ebay)}),keep=c,skip=0;
+      if(ai){keep=c.filter(function(p){return p.rating>=S.minRating&&p.ship<=S.maxShip});skip=c.length-keep.length}
+      c.forEach(function(p){p.found=keep.indexOf(p)>-1;p.sel=true});
+      S.found=true;
+      log(ai?"AI searched "+c.length+" listings, kept "+keep.length+" (rating ≥ "+S.minRating+", ≤ "+S.maxShip+" days), skipped "+skip+".":"Search returned "+keep.length+" listings. Untick any you don't want.",who)}
+    if(n===4){
+      var items=feed().filter(function(p){return ai||p.sel});
+      if(!items.length){log("Nothing selected to import.",who);return}
+      items.forEach(function(p){p.imported=true;p.found=false});
+      S.did4=true;
+      log((ai?"AI imported ":"Imported ")+items.length+" products into "+pname()+" at "+S.markup+"% markup.",who)}
+    if(n===5){
+      var ch=0;
+      imported().forEach(function(p){var o=p.cost;p.cost=Math.round(p.cost*(1+(Math.random()-.5)*.1)*100)/100;if(p.cost!==o)ch++;
+        p.stock=Math.max(0,p.stock+Math.round((Math.random()-.55)*20))});
+      log((ai?"AI synced ":"Synced ")+imported().length+" products: "+ch+" supplier prices changed, stock refreshed.",who)}
+    if(n===6){
+      var k=0;S.orders.forEach(function(o){if(o.st==="placed"&&o.appr!==false){o.st="received";k++}});
+      log("Pulled "+k+" new order"+(k===1?"":"s")+" from the store.",who)}
+    if(n===7){
+      var a=0,e=0;
+      S.orders.forEach(function(o){if(o.st==="received"){o.st="sent";o.po="PO"+(10000000+rnd(89999999));
+        o.items.forEach(function(i){var pp=byId(i.id);pp.bought=(pp.bought||0)+i.q;pp.src==="eBay"?e++:a++})}});
+      log((ai?"AI sent ":"Sent ")+(a+e)+" order lines: "+a+" to AliExpress, "+e+" to eBay.",who)}
+    if(n===8){
+      var t=0;S.orders.forEach(function(o){if(o.st==="sent"){o.st="shipped";o.trk="YT"+(1000000000+rnd(899999999));t++}});
+      log((ai?"AI wrote ":"Wrote ")+t+" tracking number"+(t===1?"":"s")+" back to the store and notified customers.",who)}
+    S.last[n]=now();
+  }
+  function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
+  async function autopilot(){
+    if(S.busy)return;S.busy=true;render();
+    log("AI autopilot started.",true);render();
+    for(var n=1;n<=8;n++){
+      await wait(650);
+      var r=reason(n);
+      if(isDone(n)&&n<=2)continue;
+      if(r){log("AI skipped step "+n+": "+r.toLowerCase()+".",true)}else run(n,true);
+      render();
+    }
+    S.busy=false;log("AI autopilot finished.",true);render();
+  }
+  function setAuto(on){
+    S.auto=on;clearInterval(timer);
+    if(on){timer=setInterval(function(){
+      if(S.busy)return;S.tick++;
+      var ran=false;
+      [5,6,7,8].forEach(function(n){if(n===5&&S.tick%4!==0)return;if(!reason(n)){run(n,true);ran=true}});
+      if(ran)render();
+    },15000);log("Autopilot is on. It checks every 15 seconds.",true)}
+    else log("Autopilot is off.",false);
+    render();
+  }
+
+  /* ---------- render ---------- */
+  function render(){
+    document.querySelectorAll("[data-platform]").forEach(function(b){
+      var on=b.dataset.platform===S.platform;b.setAttribute("aria-pressed",on);
+      b.querySelector(".sel").textContent=on?"✓ Selected":""});
+    $("#platTag").textContent=(S.platform==="shopify"?"Shopify store":"WordPress + WooCommerce store")+" · "+S.cur;
+    document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.mode===S.mode)});
+    $("#modeText").textContent=S.mode==="ai"?"The AI finds, imports, prices, orders and tracks for you. You set the rules and it does the work.":"You run each step yourself, in order, and choose exactly what gets imported.";
+    $("#aiRules").hidden=S.mode!=="ai";$("#aiActions").hidden=S.mode!=="ai";
+    $("#autoRun").disabled=S.busy;$("#autoRun").textContent=S.busy?"AI is working…":"Run AI autopilot";
+    $("#autoKeep").checked=S.auto;
+
+    var total=0;Object.keys(S.cart).forEach(function(id){total+=S.cart[id]});
+    $("#cartCount").textContent=total;
+
+    var g=imported().map(function(p){
+      var out=p.stock<=0;
+      return '<article class="card">'+pic(p)+
+      '<div class="body"><span class="src '+(p.src==="eBay"?"ebay":"ali")+'">'+p.src+'</span><h3>'+p.name+'</h3>'+
+      '<div class="row"><span class="price">'+money(price(p))+'</span><button class="btn primary" type="button" data-add="'+p.id+'"'+(out?" disabled":"")+'>'+(out?"Sold out":"Add")+'</button></div>'+
+      '<small>'+(out?"Out of stock":p.stock+" in stock")+' · ships in ~'+p.ship+' days</small></div></article>'}).join("");
+    $("#grid").innerHTML=g||'<div class="empty">No products yet. Run the Find and Import steps in the supplier sync below.</div>';
+
+    $("#steps").innerHTML=[1,2,3,4,5,6,7,8].map(function(n){
+      var r=reason(n),d=isDone(n),status=d?'<span class="pill good">Done</span>':r?'<span class="pill">Waiting</span>':'<span class="pill ready">Ready</span>';
+      var act=S.mode==="ai"?'<span class="aitag">AI handles this</span>':
+        '<button class="btn'+(!r&&!d?' primary':'')+'" type="button" data-run="'+n+'"'+((r||(d&&n<=2))?' disabled':'')+'>'+((d&&n<=2)?"Connected":LABEL[n])+'</button>';
+      return '<div class="step'+(d?' done':'')+'"><span class="n">'+n+'</span><div><h3>'+title(n)+' '+status+'</h3><p>'+DESC[n]+'</p>'+
+        (r&&!d?'<div class="why">'+r+'</div>':'')+(S.last[n]?'<div class="why" style="color:var(--muted)">Last run '+S.last[n]+'</div>':'')+'</div><div class="act">'+act+'</div></div>'}).join("");
+
+    var f=feed();$("#feedCount").textContent=f.length+" found";
+    $("#feed").innerHTML=f.length?f.map(function(p){
+      return '<div class="feedrow">'+(S.mode==="manual"?'<input type="checkbox" data-sel="'+p.id+'" aria-label="Import '+p.name+'"'+(p.sel?" checked":"")+'>':'<span></span>')+
+      '<span>'+p.name+'</span><span class="price" style="font-size:14px">'+money(p.cost)+'</span>'+
+      '<span class="sub"><span class="src '+(p.src==="eBay"?"ebay":"ali")+'">'+p.src+'</span> · ★ '+p.rating+' · '+p.ship+' days</span></div>'}).join(""):
+      '<p style="color:var(--muted);font-size:14px">Nothing waiting. Run "Find products" to search AliExpress and eBay.</p>';
+
+    $("#orders").innerHTML=S.orders.length?S.orders.slice().reverse().map(function(o){
+      var lbl={placed:"Placed",received:"In store",sent:"Sent to supplier",shipped:"Shipped"}[o.st],cl=o.st==="shipped"?"good":o.st==="placed"?"warn":"ready";
+      return '<div class="orderrow"><span><b class="mono">'+o.id+'</b> · '+o.items.map(function(i){return i.q+"× "+byId(i.id).name}).join(", ")+'</span><span class="pill '+cl+'">'+(o.appr===false?"Awaiting approval":lbl)+'</span>'+(o.appr===false?'<button class="btn primary" type="button" data-appr="'+o.id+'">Approve payment</button>':'')+((o.st==="sent"||o.st==="shipped")?'<span class="pill good">Bought from '+o.items.map(function(i){return byId(i.id).src}).filter(function(x,j,a){return a.indexOf(x)===j}).join(" + ")+'</span>':'')+
+      '<span class="sub">'+money(o.total)+(o.pay?" · "+o.pay:"")+(o.po?" · supplier order "+o.po:"")+(o.trk?" · tracking "+o.trk:"")+'</span></div>'}).join(""):
+      '<p style="color:var(--muted);font-size:14px">No orders yet. Place one from the cart or add a test order.</p>';
+
+    $("#log").innerHTML=S.log.length?S.log.map(function(l){return '<li><span class="t">'+l.t+'</span><span class="who'+(l.ai?'':' you')+'">'+(l.ai?"AI":"YOU")+'</span><span>'+l.m+'</span></li>'}).join(""):'<li><span class="t">No activity yet.</span></li>';
+    renderCart();updateConn();if(loaded)ST.s("ltv-orders",S.orders);
+  }
+  function renderCart(){
+    var ids=Object.keys(S.cart),t=0;
+    $("#cartList").innerHTML=ids.length?ids.map(function(id){var p=byId(+id),q=S.cart[id];t+=price(p)*q;
+      return '<li><span>'+p.name+'</span><span class="mono">'+money(price(p)*q)+'</span><span class="q"><button type="button" data-dec="'+id+'" aria-label="Remove one">−</button>'+q+'<button type="button" data-inc="'+id+'" aria-label="Add one">+</button></span></li>'}).join(""):'<li style="color:var(--muted)">Your cart is empty.</li>';
+    $("#cartTotal").textContent=money(t);$("#checkout").disabled=!ids.length;
+  }
+  function placeOrder(items){
+    var total=0;items.forEach(function(i){var p=byId(i.id);total+=price(p)*i.q;p.stock=Math.max(0,p.stock-i.q)});
+    var o={id:"#LTV-"+(1001+S.orders.length),items:items,total:total,st:"placed"};S.orders.push(o);
+    log("Customer order "+o.id+" placed in the "+pname()+" store.",false);return o;
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener("click",function(e){
+    var t=e.target.closest("button");if(!t)return;var d=t.dataset;
+    if(d.platform){if(S.platform!==d.platform){S.platform=d.platform;if(S.store){S.store=false;S.did4=S.did4;log("Switched to "+pname()+". Reconnect the store in step 2.",false)}save();render()}}
+    else if(d.mode){S.mode=d.mode;if(S.mode==="manual"&&S.auto)setAuto(false);render()}
+    else if(d.run){run(+d.run,false);render()}
+    else if(d.appr){S.orders.forEach(function(o){if(o.id===d.appr)o.appr=true});log("Payment for "+d.appr+" approved.",false);toast("Payment approved.");render()}
+    else if(d.add){var k=d.add;if(!me()){pend=function(){addItem(k)};auth("reg");toast("Create a free account or sign in to order.");return}addItem(k)}
+    else if(d.inc){var p2=byId(+d.inc);if(S.cart[d.inc]<p2.stock)S.cart[d.inc]++;render()}
+    else if(d.dec){S.cart[d.dec]--;if(S.cart[d.dec]<=0)delete S.cart[d.dec];render()}
+    else if(t.id==="cartOpen"){$("#cart").hidden=false}
+    else if(t.id==="cartClose"){$("#cart").hidden=true}
+    else if(t.id==="checkout"){openPay()}
+    else if(t.id==="testOrder"){
+      var pool=imported().filter(function(p){return p.stock>0});
+      if(!pool.length){toast("Import products first.");return}
+      var items2=[{id:pool[rnd(pool.length)].id,q:1+rnd(2)}];placeOrder(items2);render()}
+    else if(t.id==="autoRun"){autopilot()}
+  });
+  document.addEventListener("change",function(e){
+    var t=e.target;
+    if(t.id==="cur"){S.cur=t.value;save();render()}
+    else if(t.id==="markup"){S.markup=Math.max(0,+t.value||0);render()}
+    else if(t.id==="minRating"){S.minRating=+t.value||0}
+    else if(t.id==="maxShip"){S.maxShip=+t.value||60}
+    else if(t.id==="autoKeep"){setAuto(t.checked)}
+    else if(t.dataset&&t.dataset.sel){byId(+t.dataset.sel).sel=t.checked}
+    else if(t.dataset&&t.dataset.rate){var v=+t.value;if(v>0){S.rates[t.dataset.rate]=v;render()}}
+  });
+
+  /* ---------- init ---------- */
+  var NAMES={TZS:"Tanzanian shilling",UGX:"Ugandan shilling",RWF:"Rwandan franc",MWK:"Malawian kwacha",BWP:"Botswana pula",NAD:"Namibian dollar",MZN:"Mozambican metical",GHS:"Ghanaian cedi",USD:"US dollar",ZMW:"Zambian kwacha",EUR:"Euro",GBP:"British pound",ZAR:"South African rand",INR:"Indian rupee",NGN:"Nigerian naira",KES:"Kenyan shilling"};
+  $("#cur").innerHTML=Object.keys(S.rates).map(function(c){return '<option value="'+c+'">'+c+' · '+NAMES[c]+'</option>'}).join("");
+  $("#cur").value=S.cur;
+  $("#rates").innerHTML=Object.keys(S.rates).filter(function(c){return c!=="USD"}).map(function(c){
+    return '<label>'+c+'<input type="number" min="0" step="any" value="'+S.rates[c]+'" data-rate="'+c+'"></label>'}).join("");
+  log("Preview ready. Choose a mode and start with step 1.",false);
+  render();
+})();
+</script>
+
+</body></html>
